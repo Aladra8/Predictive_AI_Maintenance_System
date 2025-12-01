@@ -1,0 +1,12 @@
+{
+  "gap_mode_used": "quantile-per-day",
+  "merge_gap_seconds_used": null,
+  "quantile_used": 0.9,
+  "global_quantile_gap_sec": 3.0,
+  "daily_threshold_days": 1,
+  "fallback_sec": 10.0,
+  "n_events": 507,
+  "span_days": 1,
+  "first_ts": "2023-01-02 06:00:00+00:00",
+  "last_ts": "2023-01-02 09:24:27+00:00"
+}

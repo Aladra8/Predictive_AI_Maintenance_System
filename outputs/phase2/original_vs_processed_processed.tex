@@ -1,0 +1,16 @@
+\begin{table}[H]
+\centering
+\caption{Original vs processed (tags: original vs processed).}
+\label{tab:orig_vs_proc_processed}
+\small
+\begin{tabular}{lcccccc}
+\toprule
+Model & F1 (orig) & AUC (orig) & F1 (proc) & AUC (proc) & $\Delta$F1 & $\Delta$AUC \\
+\midrule
+Random Forest & 1.000 & 1.0000 & 1.000 & 1.0000 & -0.000 & +0.0000 \\
+Neural Network (MLP) & 0.991 & 1.0000 & 0.998 & 1.0000 & +0.007 & +0.0000 \\
+Logistic Regression & 0.849 & 0.9951 & 0.980 & 1.0000 & +0.131 & +0.0049 \\
+SVM (RBF) & 0.967 & 0.9999 & 0.978 & 1.0000 & +0.011 & +0.0001 \\
+\bottomrule
+\end{tabular}
+\end{table}

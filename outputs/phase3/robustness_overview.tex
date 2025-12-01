@@ -1,0 +1,16 @@
+\begin{table}[H]
+\centering
+\caption{Robustness overview: RF and MLP across split strategies (processed schema).}
+\label{tab:robustness_overview}
+\footnotesize
+\begin{tabular}{l l c c c c c c}
+\toprule
+Model & Split & Acc. & F1 (macro) & Prec. & Rec. & AUC & AP \\
+\midrule
+Neural Network (MLP) & Random (strat.) & 1.000 & 0.998 & 1.000 & 0.996 & 1.0000 & 1.0000 \\
+Neural Network (MLP) & Leakage-guard & 1.000 & 0.998 & 0.996 & 1.000 & 1.0000 & 1.0000 \\
+Random Forest & Random (strat.) & 1.000 & 1.000 & 1.000 & 0.999 & 1.0000 & 1.0000 \\
+Random Forest & Leakage-guard & 1.000 & 1.000 & 1.000 & 0.999 & 1.0000 & 1.0000 \\
+\bottomrule
+\end{tabular}
+\end{table}

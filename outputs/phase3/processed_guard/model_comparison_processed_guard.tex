@@ -1,0 +1,16 @@
+\begin{table}[H]
+\centering
+\caption{Model comparison on the \textbf{processed_guard} schema.}
+\label{{tab:model_comparison_processed_guard}}
+\small
+\begin{tabular}{lcccccc}
+\toprule
+Model & Acc. & F1 (macro) & Prec. (macro) & Rec. (macro) & AUC & AP \\
+\midrule
+Random Forest & 1.000 & 1.000 & 1.000 & 0.999 & 1.0000 & 1.0000 \\
+Neural Network (MLP) & 1.000 & 0.998 & 0.996 & 1.000 & 1.0000 & 1.0000 \\
+SVM (RBF) & 0.996 & 0.979 & 0.962 & 0.998 & 1.0000 & 1.0000 \\
+Logistic Regression & 0.995 & 0.976 & 0.957 & 0.998 & 1.0000 & 1.0000 \\
+\bottomrule
+\end{tabular}
+\end{table}

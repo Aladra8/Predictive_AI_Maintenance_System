@@ -1,0 +1,30 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.pkl
+
+# --- LaTeX Build Artifacts (Junk files) ---
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.bbl
+*.blg
+*.toc
+*.lof
+*.lot
+*.dvi
+
+# --- System ---
+.DS_Store
+.vscode/
+
+# --- Large Data ---
+# GitHub rejects files > 100MB.
+# Uncomment the line below if your CSVs are massive.
+# *.csv

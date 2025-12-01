@@ -1,0 +1,10 @@
+{
+  "n_events": 1,
+  "duration_min_mean": 204.45,
+  "duration_min_p50": 204.45,
+  "duration_min_p95": 204.45,
+  "time_min": "2023-01-02 06:00:00+00:00",
+  "time_max": "2023-01-06 08:04:00+00:00",
+  "span_hours": 98.06666666666666,
+  "merge_gap_seconds_used": 60.0
+}

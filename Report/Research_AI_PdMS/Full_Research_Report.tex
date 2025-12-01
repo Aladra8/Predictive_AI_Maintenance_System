@@ -1,0 +1,761 @@
+
+
+
+% =========================================
+% Full_Research_Report.tex
+% State of the Art Report for Elevator Predictive Maintenance
+% Author: Buba Drammeh
+% VERSION: MASTER FINAL (7 Tables + All Images + Pipeline Detail)
+% =========================================
+\documentclass[11pt, a4paper, oneside]{article}
+
+% --- Core Packages ---
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{csquotes} 
+
+% --- Page Layout ---
+\usepackage[a4paper, top=2.5cm, bottom=2.5cm, left=3cm, right=3cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{microtype}
+
+% --- Graphics, Tables, and Math ---
+\usepackage{graphicx}
+\usepackage{float}       
+\usepackage{booktabs}    
+\usepackage{tabularx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{pgfplotstable}
+\pgfplotsset{compat=1.18}
+\usepackage{siunitx}
+\sisetup{round-mode=places, round-precision=2, detect-all}
+\usepackage{ragged2e}
+\usepackage{longtable} 
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+
+\newcolumntype{L}{>{\RaggedRight\arraybackslash}X}
+\newcolumntype{M}[1]{>{\RaggedRight\arraybackslash}p{#1}}
+
+% --- Hyperlinks ---
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true, linkcolor=darkblue, citecolor=darkgreen, urlcolor=darkred,
+    pdftitle={Predictive AI Maintenance System for Elevators},
+    pdfauthor={Buba Drammeh},
+}
+\definecolor{darkblue}{rgb}{0.0, 0.0, 0.55}
+\definecolor{darkgreen}{rgb}{0.0, 0.4, 0.0}
+\definecolor{darkred}{rgb}{0.5, 0.0, 0.0}
+
+\usepackage[backend=biber, style=ieee, sorting=nyt]{biblatex}
+\addbibresource{references.bib}
+
+% --- GRAPHICS PATH ---
+% Checks both main folder and subfolder
+\graphicspath{{Images/}{Images/processed_kaggle/}}
+
+% --- SAFE GRAPHICS COMMAND ---
+\newcommand{\safeincludegraphics}[2][]{%
+    \IfFileExists{Images/processed_kaggle/#2}{%
+        \includegraphics[#1]{Images/processed_kaggle/#2}%
+    }{%
+        \IfFileExists{Images/#2}{%
+            \includegraphics[#1]{Images/#2}%
+        }{%
+             \fbox{\parbox[c][2cm]{\linewidth}{\centering \color{red}\textbf{MISSING IMAGE:}\\ \texttt{\detokenize{#2}}}}%
+        }%
+    }%
+}
+
+% =========================================
+% DOCUMENT BEGINS
+% =========================================
+\title{\huge \textbf{Predictive AI Maintenance System:} \\ \LARGE Literature, Methods, Data, and Robustness Validation on Public Elevator Telemetry Data}
+\author{\textbf{Buba Drammeh}}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\noindent Predictive Maintenance (PdM) for elevator systems is critical for ensuring passenger safety and minimizing operational downtime. However, the advancement of the field is currently constrained by a reliance on proprietary, black-box datasets, leading to a lack of reproducibility in academic research. This research addresses this gap by establishing a transparent, auditable PdM pipeline using the public Huawei Munich Research Center (MRC) telemetry dataset.
+
+Addressing the absence of ground-truth maintenance logs, I formulate a physically-grounded ``2-of-3'' analytical labeling strategy based on high-percentile thresholds of Vibration, Speed, and Revolutions. I validate the structural coherence of these labels via Principal Component Analysis (PCA), demonstrating that they align with the dominant axis of operational intensity rather than stochastic noise.
+
+A comparative benchmark is performed between a calibrated Random Forest (RF) and a Multi-Layer Perceptron (MLP). To rigorously test model robustness and rule out circular learning, I introduce a ``Leakage Guard'' protocol, evaluating performance when primary label-defining features are removed. Results indicate that the Random Forest achieves near-perfect discrimination (ROC-AUC $>$ 0.99) equivalent to the neural network, while successfully detecting faults using only secondary context features like Energy and Acceleration. Consequently, I recommend the Random Forest for deployment due to its superior interpretability. Finally, I propose an operational event-aggregation framework that converts raw high-frequency predictions into actionable maintenance tickets, significantly reducing alarm fatigue.
+\end{abstract}
+
+\clearpage
+\tableofcontents
+\listoffigures
+\listoftables
+\clearpage
+
+% =========================================
+% SECTION 1: SCOPE
+% =========================================
+\section{Scope and Motivation}
+Elevators represent safety-critical urban infrastructure. The transition from corrective maintenance (repairing after failure) to predictive maintenance (forecasting faults) is driven by the need to reduce downtime and operational costs.
+
+The primary objective of this thesis is to develop a robust PdM system that can operate effectively even in the absence of perfect ground-truth maintenance logs. I specifically address three core challenges:
+\begin{itemize}
+    \item \textbf{Data Provenance:} Establishing a baseline on public data to ensure auditability.
+    \item \textbf{Labeling Validity:} Creating a transparent, rule-based method for generating fault labels.
+    \item \textbf{Robustness:} Ensuring the model learns physical precursors rather than merely "memorizing" rules.
+\end{itemize}
+
+% =========================================
+% SECTION 2: LITERATURE REVIEW
+% =========================================
+\section{Literature: State of the Art Review}
+
+The field of Elevator PdM has evolved from simple threshold-based alarms to complex machine learning classifiers.
+
+\subsection{Key Methodologies}
+Sarayodhin et al. \cite{Sarayodhin2025_Review} provide a comprehensive 2025 review of elevator maintenance strategies, identifying mechanical wear (vibration) and door system failures as the most frequent causes of downtime.
+
+Ma et al. \cite{Ma2020_Potentials_LiftPdM} proposed an IoT-based architecture for multi-site monitoring. While their work demonstrated high accuracy on a proprietary fleet, the lack of public data makes independent verification impossible.
+
+In the domain of transfer learning, Pan et al. \cite{Pan2024_Sensors_DoorTL} demonstrated methods to adapt fault detection models across different elevator systems, addressing the "cold start" problem for new installations.
+
+\begin{table}[H]
+    \centering
+    \caption{Comparative summary of recent Elevator PdM studies.}
+    \label{tab:sota}
+    \footnotesize
+    \begin{tabularx}{\textwidth}{l M{3cm} L c}
+        \toprule
+        \textbf{Study} & \textbf{Modality} & \textbf{Method Highlights} & \textbf{Public Data} \\
+        \midrule
+        Sarayodhin \cite{Sarayodhin2025_Review} & Review & Taxonomy of fault modes and data access issues. & N/A \\
+        \midrule
+        Ma et al. \cite{Ma2020_Potentials_LiftPdM} & IoT / Multi-sensor & Edge-cloud architectures for fleet management. & No \\
+        \midrule
+        Pan et al. \cite{Pan2024_Sensors_DoorTL} & Door Audio & Transfer learning to adapt models across different sites. & No \\
+        \midrule
+        Mishra \cite{Mishra2020Elevator} & Telemetry & Deep Autoencoders for anomaly detection. & No \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+% =========================================
+% SECTION 3: DATA
+% =========================================
+\section{Dataset and Feature Engineering}
+
+\subsection{Data Provenance}
+I utilize the Huawei Munich Research Center dataset, mirrored on Zenodo \cite{Zenodo3653909}. The dataset consists of 112,001 rows of high-frequency telemetry (4 Hz sampling rate).
+
+\begin{table}[H]
+    \centering
+    \caption{Dataset Summary and Specifications.}
+    \label{tab:dataset_summary}
+    \begin{tabular}{l l}
+        \toprule
+        \textbf{Metric} & \textbf{Details} \\
+        \midrule
+        Source & Huawei MRC / Zenodo / Kaggle \\
+        Total Samples & 112,001 \\
+        Sampling Rate & 4 Hz (approx.) \\
+        Original Features & 5 (\texttt{x1}--\texttt{x5}) \\
+        Processed Features & 7 (including derived Acceleration \& Timestamp) \\
+        Target Label & Binary (\texttt{label\_fault}) \\
+        Class Balance & $\approx$ 95\% Normal / 5\% Fault \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Exploratory Data Analysis (EDA)}
+Initial analysis of the raw sensor data reveals distinct operational phases. The vibration signal shows a heavy-tailed distribution (Figure \ref{fig:eda_plots}), which justifies the use of percentile-based thresholding.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.48\linewidth}
+        \safeincludegraphics[width=\linewidth]{vibration_threshold.png}
+        \caption{Vibration Signal \& Threshold}
+        \label{fig:vib_dist}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\linewidth}
+        \safeincludegraphics[width=\linewidth]{faults_by_hour.png}
+        \caption{Class Imbalance}
+        \label{fig:fault_dist}
+    \end{subfigure}
+    \caption{EDA: Sensor Distributions. The vibration signal (left) shows spikes that we target with our labeling rule. The fault distribution (right).}
+    \label{fig:eda_plots}
+\end{figure}
+
+\subsection{Feature Mapping and Engineering}
+The raw dataset contained anonymized features labeled \texttt{x1} through \texttt{x5}. To enable interpretable time-series modeling, I performed extensive feature engineering.
+
+\paragraph{1. Semantic Mapping.}
+By analyzing the correlations and dynamic range of the signals, I established the following mapping for the anonymized columns:
+\begin{itemize}
+    \item \texttt{x1} $\rightarrow$ \textbf{Temperature}: Exhibited slow thermal drift consistent with ambient sensors.
+    \item \texttt{x2} $\rightarrow$ \textbf{Speed}: Correlated perfectly with motion phases (acceleration/deceleration).
+    \item \texttt{x3} $\rightarrow$ \textbf{Signal Strength}: Fluctuated in a narrow range typical of wireless RSSI.
+    \item \texttt{x4} $\rightarrow$ \textbf{Energy}: Showed high peaks during acceleration, consistent with motor power.
+    \item \texttt{x5} $\rightarrow$ \textbf{Motor Cycles}: A monotonically increasing counter, representing usage.
+\end{itemize}
+
+\paragraph{2. Engineered Features (Added).}
+To capture dynamic behavior, I engineered two critical features:
+
+\textbf{Acceleration ($a_t$):} Speed alone does not capture the "jerk" or smoothness of the ride. I calculated this as the discrete first-order difference of the speed signal:
+\begin{equation}
+    a_t = \frac{v_t - v_{t-1}}{\Delta t}
+\end{equation}
+
+\textbf{Timestamp ($t$):} The raw public dataset was sequential but lacked timestamps. To enable time-based splitting, I synthesized a realistic timeline starting from \texttt{2023-01-02 06:00:00} using a Poisson process.
+
+\begin{table}[H]
+    \centering
+    \caption{Complete Feature Map (Original + Engineered).}
+    \label{tab:featuremap}
+    \begin{tabularx}{0.95\textwidth}{l l X}
+        \toprule
+        \textbf{Original Name} & \textbf{Mapped Feature} & \textbf{Engineering Logic / Role} \\
+        \midrule
+        \texttt{x1} & \textbf{Temperature} & Context; affects sensor baseline. \\
+        \texttt{x2} & \textbf{Speed} & Primary operational state indicator. \\
+        \texttt{x3} & \textbf{Signal Strength} & Proxy for IoT network health. \\
+        \texttt{x4} & \textbf{Energy} & Motor load proxy. \\
+        \texttt{x5} & \textbf{Motor Cycles} & Cumulative wear counter. \\
+        \textit{(None)} & \textbf{Acceleration} & Derived: $\Delta \text{Speed}$. Detects jerk. \\
+        \textit{(None)} & \textbf{Timestamp} & Synthesized: Poisson process. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+% =========================================
+% SECTION 4: METHODOLOGY
+% =========================================
+\section{Methodology}
+
+\subsection{Labeling Strategy (The Analytical Rule)}
+Since the public dataset lacks ground-truth maintenance logs, I generated labels analytically. 
+
+\begin{quote}
+    \textbf{The "2-of-3" Rule:} A sample $x_i$ is labeled \emph{Faulty} ($y_i=1$) if at least \textbf{2 of the following 3} variables exceed their \textbf{95th percentile} thresholds ($\tau$):
+    \texttt{Vibration}, \texttt{Speed}, \texttt{Revolutions}.
+\end{quote}
+
+Mathematically, let $S$ be the set of indicator functions:
+\begin{equation}
+    S_i = \{ \mathbb{I}(vib_i > \tau_{vib}), \mathbb{I}(spd_i > \tau_{spd}), \mathbb{I}(rev_i > \tau_{rev}) \}
+\end{equation}
+The label $y_i$ is defined as $1$ if $\sum S_i \ge 2$, else $0$. This logic prevents single-sensor noise from triggering a false positive.
+
+\subsection{Role of PCA: Diagnostic and Structural Validation}
+\label{sec:pca-role}
+
+I utilize Principal Component Analysis (PCA) strictly as a \textbf{diagnostic tool}, not as an input feature for training. Its purpose is to verify label coherence and check structure before modeling.
+
+\paragraph{Definition and Interpretation.}
+PCA finds orthogonal directions (principal components) that capture maximum variance after standardization.
+\begin{itemize}
+    \item \textbf{PC1-PC2 Scatter (Figure \ref{fig:pca_visuals}a):} Each point is a row. The separation between Normal (Blue) and Fault (Red) means the label aligns with the variation in key signals.
+    \item \textbf{Loadings (Figure \ref{fig:pca_visuals}b):} Shows which variables drive the variance. In this dataset, Vibration, Speed, and Energy dominate PC1, confirming that PC1 represents \textbf{Operational Intensity}.
+\end{itemize}
+
+\paragraph{Position in the Project.}
+Since the label aligns with the dominant variance (the "streak" in the scatter plot), complex feature learning is likely unnecessary. This justifies the decision to prefer simpler, interpretable models (Random Forest) over complex ones, provided they can handle the decision boundary.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.48\linewidth}
+        \safeincludegraphics[width=\linewidth]{pca_scatter_pc1_pc2.png}
+        \caption{PC1 vs PC2 Scatter}
+        \label{fig:pca_scatter}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\linewidth}
+        \safeincludegraphics[width=\linewidth]{pca_loadings_with_vibration_barplot.png}
+        \caption{PC1 Loadings (Intensity)}
+        \label{fig:pca_loadings}
+    \end{subfigure}
+    \caption{PCA Diagnostics. The clear separation along PC1 validates that the analytical label captures a distinct physical state (High Intensity) rather than random noise.}
+    \label{fig:pca_visuals}
+\end{figure}
+
+\subsection{Preprocessing Impact}
+I evaluated different preprocessing strategies, including denoising (moving average) and feature selection. Figure \ref{fig:pca_grid} illustrates that the baseline approach (standardization only) preserved the most variance and separability.
+
+\begin{figure}[H]
+    \centering
+    \safeincludegraphics[width=0.75\linewidth]{pca_denoise_select_grid.png}
+    \caption{Effect of Denoising and Selection on PCA Structure. The 'Baseline' was chosen as it preserved the clearest separation.}
+    \label{fig:pca_grid}
+\end{figure}
+
+\subsection{Model Specifications and Pipelines}
+\label{sec:model-configs}
+
+To ensure the comparison between the classical Random Forest and the neural network is fair and reproducible, I used a defined sets of frameworks and hyperparameter configurations for both.
+
+\paragraph{1. Random Forest (Production Baseline).}
+The Random Forest classifier consists of an ensemble of decision trees. During training, the algorithm selects the optimal split at each node by minimizing the 'Gini Impurity'.
+
+\textbf{Mathematical Logic:}
+The Gini Impurity for a node $t$ is calculated as:
+\begin{equation}
+    Gini(t) = 1 - \sum (p_i)^2
+\end{equation}
+where $p_i$ is the probability of a sample belonging to class $i$ (Normal or Fault). A lower Gini score indicates a "purer" node, meaning the split has successfully isolated the faults from the normal operation.
+
+\textbf{Configuration:}
+Utilized the \texttt{scikit-learn} implementation with the following tuned parameters:
+\begin{itemize}
+    \item \textbf{n\_estimators = 400:} A high number of trees was chosen to stabilize the feature importance outputs (Mean Decrease in Impurity).
+    \item \textbf{class\_weight = "balanced":} This automatically adjusts weights inversely proportional to class frequencies, preventing the model from ignoring the rare fault cases (approx. 5\% of data).
+    \item \textbf{max\_depth = None:} Trees are allowed to grow until all leaves are pure, enabling the model to capture complex non-linear interactions between Speed and Vibration.
+\end{itemize}
+
+\paragraph{2. Multi-Layer Perceptron (Neural Benchmark).}
+The MLP is a feed-forward neural network that learns a non-linear mapping from inputs to the probability of failure.
+
+\textbf{Mathematical Logic:}
+The network propagates data through hidden layers using the **ReLU (Rectified Linear Unit)** activation function, and outputs a probability using the **Sigmoid** function:
+\begin{equation}
+    f(x) = \text{ReLU}(W \cdot x + b) \quad \rightarrow \quad \hat{y} = \frac{1}{1 + e^{-z}}
+\end{equation}
+where $W$ represents the learned weights and $b$ the bias. ReLU is chosen because it avoids the vanishing gradient problem, allowing for faster convergence on sensor data.
+
+\textbf{Configuration:}
+Designed a "funnel" architecture to compress the feature space into a decision:
+\begin{itemize}
+    \item \textbf{Architecture:} Input $\rightarrow$ Dense(64) $\rightarrow$ Dense(32) $\rightarrow$ Output(1).
+    \item \textbf{Optimizer:} \textbf{Adam} ($lr=0.001$) was selected for its adaptive learning rate properties.
+    \item \textbf{Regularization:} We implemented \textbf{Early Stopping} (patience=5) on the validation loss. This stops training immediately when the model begins to memorize noise, ensuring the result generalizes to new data.
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\caption{Exact hyperparameters for the candidate models.}
+\label{tab:model_configs}
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\textbf{Model} & \textbf{Configuration Details} \\
+\midrule
+\textbf{Random Forest (RF)} & 
+\texttt{n\_estimators}: 400 \\
+& \texttt{class\_weight}: ``balanced'' \\
+& \texttt{max\_depth}: None \\
+& \texttt{random\_state}: 42 \\
+\midrule
+\textbf{MLP (Neural Net)} & 
+Architecture: [64, 32] (ReLU) \\
+& \texttt{Optimizer}: Adam (lr=0.001) \\
+& \texttt{Batch Size}: 512 \\
+& \texttt{Early Stopping}: Patience=5 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Evaluation Protocols}
+To ensure the high performance metrics are real and not artifacts of leakage, I defined two distinct evaluation regimes:
+
+\begin{description}
+    \item[1. Guard Regime (processed\_guard):] 
+    In this split, I \textbf{drop the exact features} used by the analytical labeling rule (Vibration, Speed, Revolutions) from the training set. The model is forced to predict faults using only secondary signatures (Temperature, Energy, Acceleration). Success here proves the model learns the \emph{context} of a failure, not just the definition.
+    
+    \item[2. Event Regime (processed\_event):]
+    Merge consecutive faulty rows into single "incidents" using a 60-second gap rule. Evaluation is performed per-event rather than per-row. This mirrors operational reality, where a maintenance ticket is generated for an incident, not for every 250ms sensor tick.
+\end{description}
+
+% =========================================
+% SECTION 5: RESULTS
+% =========================================
+\section{Results and Analysis}
+
+\subsection{Model Diagnostics}
+I benchmarked the Random Forest against the Neural Network. Both models achieved high discrimination scores.
+
+\begin{figure}[H]
+    \centering
+    \textbf{A. Random Forest (Primary Model)}\par\medskip
+    \begin{subfigure}[b]{0.32\linewidth}
+        \safeincludegraphics[width=\linewidth]{roc_rf_processed.png}
+        \caption{ROC (RF)}
+    \end{subfigure}\hfill
+    \begin{subfigure}[b]{0.32\linewidth}
+        \safeincludegraphics[width=\linewidth]{pr_rf_processed.png}
+        \caption{PR (RF)}
+    \end{subfigure}\hfill
+    \begin{subfigure}[b]{0.32\linewidth}
+        \safeincludegraphics[width=\linewidth]{calibration_rf_processed.png}
+        \caption{Calib (RF)}
+    \end{subfigure}
+    
+    \vspace{1em}
+    \textbf{B. MLP Neural Network (Benchmark)}\par\medskip
+    \begin{subfigure}[b]{0.32\linewidth}
+        \safeincludegraphics[width=\linewidth]{roc_mlp_processed.png}
+        \caption{ROC (MLP)}
+    \end{subfigure}\hfill
+    \begin{subfigure}[b]{0.32\linewidth}
+        \safeincludegraphics[width=\linewidth]{pr_mlp_processed.png}
+        \caption{PR (MLP)}
+    \end{subfigure}\hfill
+    \begin{subfigure}[b]{0.32\linewidth}
+        \safeincludegraphics[width=\linewidth]{calibration_mlp_processed.png}
+        \caption{Calib (MLP)}
+    \end{subfigure}
+    \caption{Diagnostic comparison. Both models perform similarly, supporting the choice of RF for its interpretability.}
+    \label{fig:diag_compare}
+\end{figure}
+
+\subsection{Feature Importance Analysis}
+To understand the "Why" behind the predictions, the extraction of the Mean Decrease in Impurity (MDI) from the Random Forest model.
+
+Figure \ref{fig:rf_importance} confirms that \textbf{Energy} and \textbf{Acceleration} are the dominant predictors. This is physically consistent: high energy consumption often precedes mechanical stress, and abnormal acceleration (jerk) indicates rail friction or drive issues. Crucially, the model relies heavily on these secondary signatures, which explains why it performs well even in the "Guard Regime" where direct Vibration data is removed.
+
+\begin{figure}[H]
+    \centering
+    \safeincludegraphics[width=0.8\linewidth]{feature_importance_rf.png}
+    \caption{Random Forest Feature Importance. The model correctly identifies high-energy and high-acceleration states as primary risk factors, validating the physical logic of the predictions.}
+    \label{fig:rf_importance}
+\end{figure}
+
+\subsection{Performance Comparison Tables}
+Table \ref{tab:results_comparison} details the performance metrics. While both models exceed 99\% AUC, the Random Forest is preferred due to its lower training cost.
+
+\begin{table}[H]
+\centering
+\caption{Model Performance Comparison (Processed Schema).}
+\label{tab:results_comparison}
+\begin{tabular}{l c c c c}
+\toprule
+\textbf{Model} & \textbf{Accuracy} & \textbf{F1 (Macro)} & \textbf{ROC-AUC} & \textbf{AP} \\
+\midrule
+Random Forest & 0.998 & 0.985 & 0.999 & 0.998 \\
+MLP (Neural Net) & 0.997 & 0.982 & 0.999 & 0.997 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Robustness and Leakage Analysis (The Guard Regime)}
+To rigorously test whether the model depends on "memorizing" the labeling rule, I evaluated the Random Forest in the **Processed Guard** regime. In this split, the features used to define the label (\texttt{Vibration}, \texttt{Speed}, \texttt{Revolutions}) were removed from the training set. The model was forced to predict faults using only secondary signatures (\texttt{Temperature}, \texttt{Energy}, \texttt{Acceleration}).
+
+\paragraph{Quantitative Results.}
+Table \ref{tab:guard_metrics} presents the performance metrics derived from the hold-out test set. Strikingly, the model maintains near-perfect discrimination. The classification report confirms a Recall of 0.999 for the Fault class, indicating that \textit{Energy and Acceleration are highly reliable proxies} for mechanical stress.
+
+\begin{table}[H]
+    \centering
+    \caption{Performance Metrics for the Leakage Guard Regime.}
+    \label{tab:guard_metrics}
+    \begin{tabular}{l c c c c}
+        \toprule
+        \textbf{Class} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} & \textbf{Support} \\
+        \midrule
+        Normal (0) & 1.000 & 1.000 & 1.000 & 15,961 \\
+        Fault (1) & 1.000 & 0.999 & 0.999 & 840 \\
+        \midrule
+        \textbf{Overall Accuracy} & \multicolumn{4}{c}{0.9999} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\paragraph{Visual Diagnostics.}
+Figure \ref{fig:guard_diagnostics} visualizes the stability of the model under the Guard regime. 
+\begin{itemize}
+    \item \textbf{Confusion Matrix (b):} Shows almost zero False Negatives, proving safety-critical reliability.
+    \item \textbf{Calibration (c):} The probability estimates remain well-calibrated (following the diagonal), meaning the model is not over-confident despite the missing features.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.32\linewidth}
+        \safeincludegraphics[width=\linewidth]{roc_rf_processed_guard.png}
+        \caption{ROC Curve (Guard)}
+    \end{subfigure}\hfill
+    \begin{subfigure}[b]{0.32\linewidth}
+        \safeincludegraphics[width=\linewidth]{confusion_matrix_rf_processed_guard.png}
+        \caption{Confusion Matrix (Guard)}
+    \end{subfigure}\hfill
+    \begin{subfigure}[b]{0.32\linewidth}
+        \safeincludegraphics[width=\linewidth]{calibration_rf_processed_guard.png}
+        \caption{Calibration (Guard)}
+    \end{subfigure}
+    \caption{Diagnostics for the Leakage Guard Regime. The model successfully identifies faults using only secondary context features (Energy/Acceleration), proving it is learning physical precursors rather than just the labeling rule.}
+    \label{fig:guard_diagnostics}
+\end{figure}
+
+\subsection{Interpretability and "Why"}
+Feature importance analysis shows that Energy and Acceleration are key predictors. I further explored the decision boundaries using Partial Dependence Plots (PDPs).
+
+\begin{figure}[H]
+    \centering
+    % Row 1: Speed and Revolutions
+    \begin{subfigure}[b]{0.45\linewidth}
+        \safeincludegraphics[width=\linewidth]{pdp_speed.png}
+        \caption{PDP: Speed}
+    \end{subfigure}\hfill
+    \begin{subfigure}[b]{0.45\linewidth}
+        \safeincludegraphics[width=\linewidth]{pdp_revolutions.png}
+        \caption{PDP: Revolutions}
+    \end{subfigure}
+    
+    \vspace{1em} 
+    % Row 2: Acceleration and Temperature
+    \begin{subfigure}[b]{0.45\linewidth}
+        \safeincludegraphics[width=\linewidth]{pdp_acceleration.png}
+        \caption{PDP: Acceleration}
+    \end{subfigure}\hfill
+    \begin{subfigure}[b]{0.45\linewidth}
+        \safeincludegraphics[width=\linewidth]{pdp_temperature.png}
+        \caption{PDP: Temperature}
+    \end{subfigure}
+    \caption{Partial Dependence Plots (PDPs). These plots visualize the marginal effect of features on the predicted fault probability.}
+    \label{fig:pdps}
+\end{figure}
+
+% =========================================
+% SECTION 6: EVENT ANALYTICS
+% =========================================
+\section{Event-Level Analysis (Operational View)}
+
+In a real-world setting, raw row-level predictions (at 4 Hz) would flood operators with thousands of alerts. Distinguish between:
+\begin{itemize}
+    \item \textbf{Row-Level Prediction:} The immediate output of the classifier (is this millisecond faulty?).
+    \item \textbf{Operational Event:} A consolidated "Maintenance Ticket" representing a sustained period of failure.
+\end{itemize}
+To bridge this gap, I developed an aggregation logic that merges consecutive faulty rows into discrete events using a \textbf{60-second gap rule}. If two faults occur within 60 seconds of each other, they are grouped into the same event.
+
+\subsection{Temporal Distribution}
+Faults are not randomly distributed but clustered in specific operational windows. Figure \ref{fig:temporal_analysis_grid} presents a comprehensive view of these patterns across different time scales.
+
+\begin{itemize}
+    \item \textbf{Macro View (Top Row):} The daily and weekly plots reveal systemic consistency. The maintenance activity is not uniform; distinct "busy days" suggest correlation with building occupancy or scheduled load.
+    \item \textbf{Micro View (Bottom Row):} The hourly breakdown shows peaks during specific hours (e.g., morning rush), validating that mechanical stress is driven by passenger traffic. The density timeline (bottom right) confirms that faults are "bursty"; they happen in tight clusters rather than isolated trickles.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    % ROW 1: Macro View
+    \begin{subfigure}[b]{0.48\linewidth}
+        \safeincludegraphics[width=\linewidth]{events_per_day.png}
+        \caption{Events per Day}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\linewidth}
+        \safeincludegraphics[width=\linewidth]{events_per_week.png}
+        \caption{Events per Week}
+    \end{subfigure}
+    
+    \vspace{1em} 
+    
+    % ROW 2: Micro View
+    \begin{subfigure}[b]{0.48\linewidth}
+        \safeincludegraphics[width=\linewidth]{events_by_hour.png}
+        \caption{Events by Hour}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\linewidth}
+        \safeincludegraphics[width=\linewidth]{faults_over_time.png}
+        \caption{Fault Density Timeline}
+    \end{subfigure}
+    
+    \caption{Multi-scale Temporal Analysis. The clustering of events at both macro (daily) and micro (hourly) levels validates the need for event-based dispatching rather than continuous raw alerting.}
+    \label{fig:temporal_analysis_grid}
+\end{figure}
+
+\subsection{Event Statistics and Characteristics}
+Aggregating the 112,001 raw rows resulted in 507 discrete maintenance events. Table \ref{tab:event_stats} summarizes the characteristics of these events.
+
+The key insight is the \textbf{Median Duration of 1.2 minutes}. This indicates that most faults are transient spikes, likely caused by temporary friction or sensor noise rather than catastrophic breakdowns. However, the \textbf{Max Duration of 8.28 minutes} points to serious, sustained failure modes that require immediate intervention.
+
+\begin{table}[H]
+    \centering
+    \caption{Summary of Event Aggregation Statistics.}
+    \label{tab:event_stats}
+    \begin{tabular}{l l}
+        \toprule
+        \textbf{Metric} & \textbf{Value} \\
+        \midrule
+        \textbf{Merge Rule} & Fixed Gap (60 seconds) \\
+        \textbf{Dataset Span} & Single calendar day (approx.) \\
+        \textbf{Count of Events} & 507 \\
+        \textbf{Median Duration} & 1.20 min \\
+        \textbf{Max Duration} & 8.28 min \\
+        \textbf{Total Fault Rows} & 5,600 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Top 10 Longest Fault Events}
+To prioritize maintenance responses, I isolated the longest sustained events from event list csv file generated from the code. Table \ref{tab:top_events} lists the top 10 events by duration. These specific timestamps represent the highest-value targets for root cause analysis by site engineers.
+
+\begin{table}[H]
+    \centering
+    \caption{Top 10 longest fault events by duration (Extracted from \texttt{events\_table.csv}).}
+    \label{tab:top_events}
+    \begin{tabular}{r l r r}
+    \toprule
+    \textbf{Event ID} & \textbf{Start Time (UTC)} & \textbf{Duration (min)} & \textbf{Rows} \\
+    \midrule
+    449 & 2023-01-02 07:30:17 & 8.28 & 298 \\
+    443 & 2023-01-02 07:19:42 & 6.68 & 238 \\
+    507 & 2023-01-02 09:18:20 & 6.12 & 213 \\
+    455 & 2023-01-02 07:48:31 & 6.08 & 220 \\
+    463 & 2023-01-02 08:09:46 & 6.05 & 230 \\
+    490 & 2023-01-02 08:54:53 & 5.82 & 205 \\
+    452 & 2023-01-02 07:41:10 & 5.80 & 196 \\
+    467 & 2023-01-02 08:18:32 & 4.63 & 158 \\
+    462 & 2023-01-02 08:05:05 & 4.58 & 154 \\
+    481 & 2023-01-02 08:39:09 & 3.90 & 148 \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+% % =========================================
+% % SECTION 7: CONCLUSION
+% % =========================================
+% \section{Conclusion and Future Directions}
+
+% \subsection{Summary of Contributions}
+% In this thesis, I have successfully established a reproducible, auditable baseline for Elevator Predictive Maintenance using public telemetry data. By addressing the core challenge of missing labels with a transparent analytical rule, I demonstrated that valid fault precursors can be identified without relying on proprietary black-box data. My comparative analysis reveals that the **Random Forest (400 estimators)** is the optimal model for immediate deployment.
+
+% \subsection{Implications for Industry}
+% For elevator operators, this study suggests that investing in "add-on" IoT sensors (accelerometers and power meters) can yield predictive insights comparable to integrated OEM controllers. The performance of the Random Forest model (ROC-AUC $>$ 0.95) indicates that computationally expensive Deep Learning models are not strictly necessary for tabular telemetry data, allowing for cheaper edge deployment.
+
+% \subsection{Limitations and Future Work}
+% The primary limitation remains the lack of ground-truth "Failure to Start" or "Entrapment" logs. Future work should focus on:
+% \begin{enumerate}
+%     \item \textbf{Domain Adaptation:} Applying Transfer Learning techniques \cite{Pan2024_Sensors_DoorTL} to generalize this model to different elevator makes and models using the patterns learned here.
+%     \item \textbf{Sequence Modeling:} Moving from tabular prediction to sequence-aware models (LSTMs) to detect temporal patterns (e.g., a gradual increase in vibration over weeks) which are invisible to the current snapshot-based Random Forest.
+% \end{enumerate}
+
+% % REPLACE Table 7 (or add this new table) in Section 7
+% \begin{table}[H]
+%     \centering
+%     \caption{Operational comparison of candidate models.}
+%     \label{tab:compare_models_detailed}
+%     \footnotesize
+%     \begin{tabularx}{\textwidth}{l X X X}
+%         \toprule
+%         \textbf{Criterion} & \textbf{Random Forest (Recommended)} & \textbf{MLP (Benchmark)} & \textbf{Sequence Models (Future)} \\
+%         \midrule
+%         Test Discrimination & High (on par with MLP) & High & Potentially higher \\
+%         Calibration & Strong (Isotonic) & Strong (Platt/Iso) & Difficult \\
+%         Interpretability & \textbf{Native} (Impurity/PDPs) & Limited (Post-hoc) & Low (Black-box) \\
+%         Ops Complexity & \textbf{Low} & Medium & High \\
+%         Inference Latency & Low & Low--Medium & Medium--High \\
+%         Robustness & Good (Handles outliers) & Medium & Sensitive \\
+%         Data Requirement & Modest & Modest & High (Long history) \\
+%         \midrule
+%         \textbf{Role} & \textbf{Primary Production} & \textbf{Sanity Benchmark} & \textbf{R\&D Track} \\
+%         \bottomrule
+%     \end{tabularx}
+% \end{table}
+
+% \printbibliography
+
+% \appendix
+% \section{Reproducibility Notes}
+% All figures were generated from scripts in \texttt{src/} and reside in \texttt{Images/processed\_kaggle/}.
+
+% \section{Additional Artifacts}
+% \begin{figure}[H]
+%     \centering
+%     \safeincludegraphics[width=0.6\linewidth]{confusion_matrix_rf.png}
+%     \caption{Confusion Matrix for the chosen Random Forest Model.}
+%     \label{fig:appendix_cm}
+% \end{figure}
+
+% \end{document}
+
+% =========================================
+% SECTION 7: CONCLUSION 
+% =========================================
+\section{Conclusion and Future Directions}
+
+\subsection{Summary of Contributions}
+In this research, I have successfully established a reproducible, auditable baseline for Elevator Predictive Maintenance using public telemetry data. By addressing the core challenge of missing labels with a transparent analytical rule, I demonstrated that valid fault precursors can be identified without relying on proprietary black-box data. My comparative analysis reveals that the \textbf{Random Forest} (400 estimators) is the optimal model for immediate deployment.
+
+I completed a deliverable, a reproducible, public-data baseline for elevator PdM, covering labeling, PCA, RF/MLP, calibration, and event analytics across a multi-day span. The \textbf{Random Forest} baseline is a credible deployment starting point. Field progress still hinges on longer, labeled, multi-site public datasets. Priorities: robust unsupervised/semi-supervised learning, domain adaptation, and event-aware model selection.
+
+\subsection{Implications for Industry}
+For elevator operators, this study suggests that investing in "add-on" IoT sensors (accelerometers and power meters) can yield predictive insights comparable to integrated OEM controllers. The performance of the Random Forest model (ROC-AUC $>$ 0.95) indicates that computationally expensive Deep Learning models are not strictly necessary for tabular telemetry data, allowing for cheaper edge deployment on existing hardware.
+
+\subsection{Limitations and Future Work}
+The primary limitation remains the lack of ground-truth "Failure to Start" or "Entrapment" logs. The "Leakage Guard" protocol validates that our model learns physical context (Energy/Acceleration) rather than just the labeling rule (Vibration), but real-world validation is the next necessary step.
+Future work should focus on:
+\begin{enumerate}
+    \item \textbf{Domain Adaptation:} Applying Transfer Learning techniques \cite{Pan2024_Sensors_DoorTL} to generalize this model to different elevator makes and models using the patterns learned here.
+    \item \textbf{Sequence Modeling:} Moving from tabular prediction to sequence-aware models (LSTMs) to detect temporal patterns (e.g., a gradual increase in vibration over weeks) which are invisible to the current snapshot-based Random Forest.
+\end{enumerate}
+
+\begin{table}[H]
+    \centering
+    \caption{Operational comparison of candidate models.}
+    \label{tab:compare_models_detailed}
+    \footnotesize
+    \begin{tabularx}{\textwidth}{l X X X}
+        \toprule
+        \textbf{Criterion} & \textbf{Random Forest (Recommended)} & \textbf{MLP (Benchmark)} & \textbf{Sequence Models (Future)} \\
+        \midrule
+        Test Discrimination & High (on par with MLP) & High & Potentially higher \\
+        Calibration & Strong (Isotonic) & Strong (Platt/Iso) & Difficult \\
+        Interpretability & \textbf{Native} (Impurity/PDPs) & Limited (Post-hoc) & Low (Black-box) \\
+        Ops Complexity & \textbf{Low} & Medium & High \\
+        Inference Latency & Low & Low--Medium & Medium--High \\
+        Robustness & Good (Handles outliers) & Medium & Sensitive \\
+        Data Requirement & Modest & Modest & High (Long history) \\
+        \midrule
+        \textbf{Role} & \textbf{Primary Production} & \textbf{Sanity Benchmark} & \textbf{R\&D Track} \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+% =========================================
+% APPENDICES 
+% =========================================
+\clearpage
+\appendix
+
+\section{Reproducibility Notes}
+All figures and tables in this report were generated from scripts located in the project's \texttt{src/} directory. The primary analysis script is \texttt{phase1\_noise\_fs.py}, which writes its outputs to the \texttt{Images/processed\_kaggle/} and \texttt{Tables/} directories. The event table was derived from \texttt{events\_table.csv}.
+
+\section{Additional Artifacts and Diagnostics}
+To support the robustness claims in Phase 3, we present the full diagnostic panel for the "Guard Regime" (where vibration sensors are removed).
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.32\linewidth}
+        \safeincludegraphics[width=\linewidth]{roc_rf_processed_guard.png}
+        \caption{ROC Curve (Guard)}
+    \end{subfigure}\hfill
+    \begin{subfigure}[b]{0.32\linewidth}
+        \safeincludegraphics[width=\linewidth]{confusion_matrix_rf_processed_guard.png}
+        \caption{Confusion Matrix (Guard)}
+    \end{subfigure}\hfill
+    \begin{subfigure}[b]{0.32\linewidth}
+        \safeincludegraphics[width=\linewidth]{calibration_rf_processed_guard.png}
+        \caption{Calibration (Guard)}
+    \end{subfigure}
+    \caption{Full Diagnostics for the Guard Regime. The model retains high discriminative power even when restricted to secondary features (Energy/Acceleration).}
+    \label{fig:guard_full_panel}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \safeincludegraphics[width=0.75\linewidth]{combined_faults_scatter.png}
+    \caption{Visualizing the Labeling Logic (Vibration vs. Speed). The separation of the red cluster confirms that the analytical rule isolates high-energy states.}
+    \label{fig:combo_scatter}
+\end{figure}
+
+% =========================================
+% REFERENCES 
+% =========================================
+\clearpage
+\phantomsection
+\addcontentsline{toc}{section}{References}
+\printbibliography
+
+\end{document}

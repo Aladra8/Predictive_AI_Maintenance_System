@@ -1,0 +1,23 @@
+{
+  "thresholds": {
+    "vibration": 69.96,
+    "speed": 4.184,
+    "energy": 5892.711696,
+    "revolutions": 76.764
+  },
+  "features_used": [
+    "temperature",
+    "speed",
+    "acceleration",
+    "humidity",
+    "vibration",
+    "revolutions",
+    "signal_strength",
+    "energy",
+    "motor_cycles"
+  ],
+  "split": "event",
+  "time_col": "timestamp",
+  "event_gap_minutes": 5.0,
+  "leakage_guard": false
+}
