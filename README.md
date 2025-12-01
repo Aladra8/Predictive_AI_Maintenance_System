@@ -23,7 +23,7 @@ A reproducible, transparent Predictive Maintenance (PdM) pipeline for elevator s
 
 ---
 
-## 🔭 Project Overview
+## Project Overview
 
 **Motivation:** Public research in Elevator PdM is hindered by the lack of labeled datasets. Most studies rely on proprietary "black box" data.
 **Objective:** To create an auditable, open-source pipeline that:
@@ -34,7 +34,7 @@ A reproducible, transparent Predictive Maintenance (PdM) pipeline for elevator s
 
 ---
 
-## 📊 Dataset & Feature Engineering
+## Dataset & Feature Engineering
 
 **Source:** Huawei Munich Research Center (Zenodo/Kaggle).
 **Raw Data:** 112,001 rows of high-frequency telemetry (approx 4Hz).
@@ -76,7 +76,7 @@ Raw row-level predictions (4Hz) create too much noise. We implemented an event l
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
 Predictive_AI_Maintenance_System/
