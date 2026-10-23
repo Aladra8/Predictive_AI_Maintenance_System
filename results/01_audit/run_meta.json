@@ -1,0 +1,201 @@
+{
+  "experiment": "01_audit",
+  "created": "2026-10-22T22:42:10",
+  "git": "no-git",
+  "python": "3.12.13",
+  "engine": "sklearn",
+  "config": {
+    "seed": 42,
+    "data": {
+      "kaggle_csv": "data/raw/predictive-maintenance-dataset.csv",
+      "zenodo_csv": "data/raw/zenodo_predictive-maintenance-dataset.csv",
+      "kaggle_md5": "f4b2fcb07499a7e8e17b19b29cca3eaa",
+      "zenodo_md5": "e6fc08f1f189dd822cdb20b93b61051b",
+      "sampling_hz": 4,
+      "clock_start": "2020-01-01 16:30:00",
+      "vibration_nan": "ffill"
+    },
+    "thesis_names": {
+      "x1": "temperature",
+      "x2": "speed",
+      "x3": "signal_strength",
+      "x4": "energy",
+      "x5": "motor_cycles"
+    },
+    "thesis_replication": {
+      "quantile": 0.95,
+      "k": 2,
+      "rule_2of3": [
+        "vibration",
+        "speed",
+        "revolutions"
+      ],
+      "rule_2of4": [
+        "vibration",
+        "speed",
+        "energy",
+        "revolutions"
+      ],
+      "features": [
+        "temperature",
+        "speed",
+        "acceleration",
+        "humidity",
+        "vibration",
+        "revolutions",
+        "signal_strength",
+        "energy",
+        "motor_cycles"
+      ],
+      "guard_as_described": [
+        "vibration",
+        "speed",
+        "revolutions"
+      ],
+      "guard_as_coded": [
+        "vibration",
+        "speed",
+        "energy",
+        "revolutions"
+      ],
+      "split": {
+        "train": 0.7,
+        "val": 0.15,
+        "test": 0.15
+      }
+    },
+    "time_aware": {
+      "n_blocks": 10
+    },
+    "vibration_episodes": {
+      "quantile": 0.95,
+      "merge_gap_s": 60,
+      "min_duration_s": 0,
+      "context_features": [
+        "revolutions",
+        "humidity"
+      ],
+      "window_s": [
+        15,
+        60,
+        300
+      ],
+      "horizons_s": [
+        10,
+        60
+      ],
+      "n_blocks": 6,
+      "models": [
+        "rf",
+        "lr"
+      ]
+    },
+    "events": {
+      "gap_sensitivity_s": [
+        3,
+        10,
+        30,
+        60,
+        120,
+        300
+      ]
+    },
+    "pca": {
+      "silhouette_sample": 10000
+    },
+    "models": {
+      "engine": "sklearn",
+      "list": [
+        "rf",
+        "mlp",
+        "lr",
+        "svm"
+      ],
+      "svm_max_train": 20000,
+      "rf": {
+        "n_estimators": 400,
+        "max_depth": null,
+        "class_weight": "balanced",
+        "n_jobs": -1
+      },
+      "mlp": {
+        "hidden_layer_sizes": [
+          64,
+          32
+        ],
+        "batch_size": 256,
+        "learning_rate_init": 0.001,
+        "alpha": 0.0001,
+        "max_iter": 200,
+        "early_stopping": true,
+        "n_iter_no_change": 5
+      },
+      "lr": {
+        "max_iter": 2000,
+        "class_weight": "balanced"
+      },
+      "svm": {
+        "kernel": "rbf",
+        "class_weight": "balanced",
+        "probability": true
+      },
+      "bootstrap_ci": 500
+    },
+    "synthetic": {
+      "n_sessions": 15,
+      "session_hours": 2.0,
+      "fault_share": 0.8,
+      "precursor_min": [
+        10,
+        25
+      ],
+      "fault_min": [
+        5,
+        15
+      ],
+      "seed": 3,
+      "eval_stride": 4,
+      "n_folds": 4,
+      "window_s": [
+        15,
+        60,
+        300
+      ],
+      "channels": [
+        "revolutions",
+        "humidity",
+        "vibration",
+        "motor_current"
+      ],
+      "models": [
+        "rf",
+        "lr"
+      ],
+      "alarm_threshold": 0.5,
+      "event_gap_s": 60,
+      "strength_sensitivity": [
+        0.25,
+        0.5,
+        1.0
+      ]
+    },
+    "deploy": {
+      "model": "rf",
+      "target": "precursor_or_fault",
+      "channels": [
+        "revolutions",
+        "humidity",
+        "vibration",
+        "motor_current"
+      ],
+      "alarm_threshold": 0.5,
+      "event_gap_s": 60,
+      "min_event_alarms": 3,
+      "holdout_sessions": [
+        13,
+        14
+      ],
+      "model_dir": "deploy/model"
+    }
+  }
+}

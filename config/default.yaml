@@ -1,0 +1,87 @@
+# Single source of truth for every experiment in this repository.
+# Every script reads this file; every output folder stores a copy of it.
+
+seed: 42
+
+data:
+  kaggle_csv: data/raw/predictive-maintenance-dataset.csv          # Kaggle mirror (ID, revolutions, humidity, vibration, x1..x5)
+  zenodo_csv: data/raw/zenodo_predictive-maintenance-dataset.csv   # original Huawei release (3 columns, ';'-separated)
+  kaggle_md5: f4b2fcb07499a7e8e17b19b29cca3eaa
+  zenodo_md5: e6fc08f1f189dd822cdb20b93b61051b
+  sampling_hz: 4                 # documented by the data owner
+  clock_start: "2020-01-01 16:30:00"   # recording window 16:30-23:30 (date is a placeholder)
+  vibration_nan: ffill           # how the thesis pipeline filled the 2,438 missing vibration values
+
+# Names used in the thesis for the anonymised Kaggle columns (kept ONLY for replication).
+# The audit shows these columns are deterministic transforms of the three original channels.
+thesis_names:
+  x1: temperature
+  x2: speed
+  x3: signal_strength
+  x4: energy
+  x5: motor_cycles
+
+thesis_replication:
+  quantile: 0.95
+  k: 2
+  rule_2of3: [vibration, speed, revolutions]
+  rule_2of4: [vibration, speed, energy, revolutions]
+  features: [temperature, speed, acceleration, humidity, vibration, revolutions, signal_strength, energy, motor_cycles]
+  guard_as_described: [vibration, speed, revolutions]          # thesis text, Eq. 6.11
+  guard_as_coded: [vibration, speed, energy, revolutions]      # phase2_training.py --leakage-guard
+  split: {train: 0.70, val: 0.15, test: 0.15}
+
+time_aware:
+  n_blocks: 10                   # contiguous blocks for blocked cross-validation
+
+vibration_episodes:              # corrected, defensible experiment
+  quantile: 0.95                 # vibration exceedance threshold
+  merge_gap_s: 60                # exceedances closer than this form one episode (real 4 Hz clock)
+  min_duration_s: 0
+  context_features: [revolutions, humidity]        # independent channels only (x1..x5 are duplicates)
+  window_s: [15, 60, 300]        # past-only rolling windows for history features
+  horizons_s: [10, 60]           # early-warning horizons
+  n_blocks: 6                    # blocked CV folds (block 0 has no episodes; reported as such)
+  models: [rf, lr]               # 3 tasks x 3 feature sets x 6 folds per model; add mlp if time allows
+
+events:
+  gap_sensitivity_s: [3, 10, 30, 60, 120, 300]
+
+pca:
+  silhouette_sample: 10000
+
+models:
+  engine: sklearn                # sklearn (default) | numpy (dependency-free reference engine used for tests)
+  list: [rf, mlp, lr, svm]
+  svm_max_train: 20000           # RBF-SVM is O(n^2); subsample the training set for tractability
+  rf: {n_estimators: 400, max_depth: null, class_weight: balanced, n_jobs: -1}
+  mlp: {hidden_layer_sizes: [64, 32], batch_size: 256, learning_rate_init: 0.001, alpha: 0.0001, max_iter: 200, early_stopping: true, n_iter_no_change: 5}
+  lr: {max_iter: 2000, class_weight: balanced}
+  svm: {kernel: rbf, class_weight: balanced, probability: true}
+  bootstrap_ci: 500
+
+synthetic:                       # Experiment 3: semi-synthetic benchmark with injected faults
+  n_sessions: 15
+  session_hours: 2.0
+  fault_share: 0.8
+  precursor_min: [10, 25]
+  fault_min: [5, 15]
+  seed: 3                        # gives 4 sessions per fault type + 3 healthy sessions
+  eval_stride: 4                 # evaluate every 4th row (1 Hz) to keep models fast
+  n_folds: 4                     # leave-sessions-out folds
+  window_s: [15, 60, 300]
+  channels: [revolutions, humidity, vibration, motor_current]
+  models: [rf, lr]
+  alarm_threshold: 0.5
+  event_gap_s: 60
+  strength_sensitivity: [0.25, 0.5, 1.0]   # fault effect size relative to default
+
+deploy:                          # model served by deploy/service (trained by scripts/09)
+  model: rf
+  target: precursor_or_fault     # alarm when degradation has started (early warning)
+  channels: [revolutions, humidity, vibration, motor_current]
+  alarm_threshold: 0.5
+  event_gap_s: 60
+  min_event_alarms: 3            # ignore single-sample blips
+  holdout_sessions: [13, 14]     # never used for training; replay these for an honest demo
+  model_dir: deploy/model

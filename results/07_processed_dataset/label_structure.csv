@@ -1,0 +1,4 @@
+label,positives,share,first_row,last_row,n_contiguous_runs,longest_run_rows,positives_span_minutes
+label_fault (2-of-4 @95),5600,0.0499995535754145,0,5599,1,5600,23.333333333333332
+Fault_Combo2of3_TUNED (vib80/rev65/abs-speed65),8789,0.07847251363827108,19208,105560,3004,7,359.8041666666667
+Fault_950 (vibration > 95th pct),5611,0.05009776698422336,19208,105160,2955,7,358.1375

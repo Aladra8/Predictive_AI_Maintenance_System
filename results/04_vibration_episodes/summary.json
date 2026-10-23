@@ -1,0 +1,8 @@
+{
+  "vibration_threshold": 69.78,
+  "episodes": 24,
+  "episode_rows": 16258,
+  "purge_rows": 1200,
+  "n_blocks": 6,
+  "engine": "sklearn"
+}

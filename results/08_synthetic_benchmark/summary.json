@@ -1,0 +1,14 @@
+{
+  "rows_4Hz": 432000,
+  "rows_evaluated_1Hz": 108000,
+  "sessions": 15,
+  "faulty_sessions": 12,
+  "healthy_hours": 24.491666666666667,
+  "fault_types": {
+    "bearing_wear": 4,
+    "misalignment": 4,
+    "humidity_friction": 4,
+    "none": 3
+  },
+  "engine": "sklearn"
+}

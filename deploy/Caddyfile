@@ -1,0 +1,4 @@
+# Replace pdm.example.org with your domain (DNS A record -> the VM's public IP).
+pdm.example.org {
+    reverse_proxy pdm:8080
+}

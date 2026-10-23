@@ -1,0 +1,13 @@
+regime,model,f1_macro,recall_fault,auc_roc,avg_precision
+"processed, random split",rf,0.9996865410043304,0.9988095238095238,1.0,1.0
+"processed, random split",mlp,0.9981139238914798,0.9928571428571428,0.9999995524806,0.9999915569064506
+"processed, random split",lr,0.9797726299325876,1.0,1.0,1.0
+"processed, random split",svm,0.9783217565213652,1.0,1.0,1.0
+"processed, guard (as coded)",rf,0.9996865410043304,0.9988095238095238,1.0,1.0
+"processed, guard (as coded)",mlp,0.9981266438279488,1.0,1.0,1.0
+"processed, guard (as coded)",svm,0.9789011679015448,1.0,1.0,1.0
+"processed, guard (as coded)",lr,0.9763035981126632,1.0,1.0,1.0
+"original columns, random split",rf,1.0,1.0,1.0,1.0
+"original columns, random split",mlp,0.9909576433863764,1.0,0.9999831500752048,0.999690500979378
+"original columns, random split",svm,0.967126134211309,1.0,0.9999092584136562,0.9984552867760256
+"original columns, random split",lr,0.8488458611774444,0.9825581395348836,0.9950699016577116,0.9853344392203494

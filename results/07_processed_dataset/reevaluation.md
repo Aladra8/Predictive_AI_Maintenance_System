@@ -1,0 +1,38 @@
+| label | evaluation | model | f1_macro | roc_auc | avg_precision | test_positives |
+|---|---|---|---|---|---|---|
+| label_fault (2-of-4 @95) | random split | rf | 0.9997 | 1.0000 | 1.0000 | 840 |
+| label_fault (2-of-4 @95) | random split, shuffled file | rf | 1.0000 | 1.0000 | 1.0000 | 840 |
+| label_fault (2-of-4 @95) | blocked CV (10 blocks, 60 s purge) | rf | 0.4872 | 0.5000 | 0.0500 | 5600 |
+| label_fault (2-of-4 @95) | blocked CV, strict guard (humidity, motor_cycles) | rf | 0.4467 | 0.3864 | 0.0500 | 5600 |
+| label_fault (2-of-4 @95) | random split | mlp | 0.9997 | 1.0000 | 1.0000 | 840 |
+| label_fault (2-of-4 @95) | random split, shuffled file | mlp | 0.9997 | 1.0000 | 1.0000 | 840 |
+| label_fault (2-of-4 @95) | blocked CV (10 blocks, 60 s purge) | mlp | 0.4843 | 0.0263 | 0.0500 | 5600 |
+| label_fault (2-of-4 @95) | blocked CV, strict guard (humidity, motor_cycles) | mlp | 0.4872 | 0.0263 | 0.0500 | 5600 |
+| label_fault (2-of-4 @95) | random split | lr | 0.9732 | 1.0000 | 1.0000 | 840 |
+| label_fault (2-of-4 @95) | random split, shuffled file | lr | 0.9772 | 1.0000 | 1.0000 | 840 |
+| label_fault (2-of-4 @95) | blocked CV (10 blocks, 60 s purge) | lr | 0.4808 | 0.0263 | 0.0500 | 5600 |
+| label_fault (2-of-4 @95) | blocked CV, strict guard (humidity, motor_cycles) | lr | 0.4649 | 0.0263 | 0.0500 | 5600 |
+| Fault_Combo2of3_TUNED (vib80/rev65/abs-speed65) | random split | rf | 1.0000 | 1.0000 | 1.0000 | 1319 |
+| Fault_Combo2of3_TUNED (vib80/rev65/abs-speed65) | random split, shuffled file | rf | 1.0000 | 1.0000 | 1.0000 | 1319 |
+| Fault_Combo2of3_TUNED (vib80/rev65/abs-speed65) | blocked CV (10 blocks, 60 s purge) | rf | 0.7313 | 0.8682 | 0.5392 | 8789 |
+| Fault_Combo2of3_TUNED (vib80/rev65/abs-speed65) | blocked CV, strict guard (humidity, motor_cycles) | rf | 0.4215 | 0.4661 | 0.0711 | 8789 |
+| Fault_Combo2of3_TUNED (vib80/rev65/abs-speed65) | random split | mlp | 0.9938 | 0.9999 | 0.9991 | 1319 |
+| Fault_Combo2of3_TUNED (vib80/rev65/abs-speed65) | random split, shuffled file | mlp | 0.9965 | 0.9999 | 0.9990 | 1319 |
+| Fault_Combo2of3_TUNED (vib80/rev65/abs-speed65) | blocked CV (10 blocks, 60 s purge) | mlp | 0.6448 | 0.9809 | 0.7155 | 8789 |
+| Fault_Combo2of3_TUNED (vib80/rev65/abs-speed65) | blocked CV, strict guard (humidity, motor_cycles) | mlp | 0.4796 | 0.4925 | 0.0693 | 8789 |
+| Fault_Combo2of3_TUNED (vib80/rev65/abs-speed65) | random split | lr | 0.8400 | 0.9602 | 0.5334 | 1319 |
+| Fault_Combo2of3_TUNED (vib80/rev65/abs-speed65) | random split, shuffled file | lr | 0.8467 | 0.9639 | 0.5605 | 1319 |
+| Fault_Combo2of3_TUNED (vib80/rev65/abs-speed65) | blocked CV (10 blocks, 60 s purge) | lr | 0.5423 | 0.8161 | 0.2544 | 8789 |
+| Fault_Combo2of3_TUNED (vib80/rev65/abs-speed65) | blocked CV, strict guard (humidity, motor_cycles) | lr | 0.2290 | 0.2843 | 0.0506 | 8789 |
+| Fault_950 (vibration > 95th pct) | random split | rf | 1.0000 | 1.0000 | 1.0000 | 841 |
+| Fault_950 (vibration > 95th pct) | random split, shuffled file | rf | 1.0000 | 1.0000 | 1.0000 | 841 |
+| Fault_950 (vibration > 95th pct) | blocked CV (10 blocks, 60 s purge) | rf | 1.0000 | 1.0000 | 1.0000 | 5611 |
+| Fault_950 (vibration > 95th pct) | blocked CV, strict guard (temperature, speed, acceleration, humidity, revolutions, signal_strength, energy, motor_cycles) | rf | 0.4872 | 0.6056 | 0.0689 | 5611 |
+| Fault_950 (vibration > 95th pct) | random split | mlp | 0.9959 | 1.0000 | 0.9992 | 841 |
+| Fault_950 (vibration > 95th pct) | random split, shuffled file | mlp | 0.9934 | 0.9998 | 0.9973 | 841 |
+| Fault_950 (vibration > 95th pct) | blocked CV (10 blocks, 60 s purge) | mlp | 0.9931 | 0.9983 | 0.9947 | 5611 |
+| Fault_950 (vibration > 95th pct) | blocked CV, strict guard (temperature, speed, acceleration, humidity, revolutions, signal_strength, energy, motor_cycles) | mlp | 0.4731 | 0.7287 | 0.0949 | 5611 |
+| Fault_950 (vibration > 95th pct) | random split | lr | 0.9965 | 1.0000 | 0.9999 | 841 |
+| Fault_950 (vibration > 95th pct) | random split, shuffled file | lr | 0.9934 | 1.0000 | 0.9998 | 841 |
+| Fault_950 (vibration > 95th pct) | blocked CV (10 blocks, 60 s purge) | lr | 0.9958 | 1.0000 | 0.9997 | 5611 |
+| Fault_950 (vibration > 95th pct) | blocked CV, strict guard (temperature, speed, acceleration, humidity, revolutions, signal_strength, energy, motor_cycles) | lr | 0.4919 | 0.7322 | 0.0836 | 5611 |

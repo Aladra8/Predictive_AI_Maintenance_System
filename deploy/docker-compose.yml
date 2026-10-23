@@ -1,0 +1,19 @@
+# Run from the repository root:  docker compose -f deploy/docker-compose.yml up -d --build
+services:
+  pdm:
+    build: {context: .., dockerfile: deploy/Dockerfile}
+    image: elevator-pdm:1.0
+    restart: unless-stopped
+    ports: ["127.0.0.1:8080:8080"]          # only reachable through the reverse proxy below
+    environment:
+      PDM_API_KEY: ${PDM_API_KEY:?set PDM_API_KEY in deploy/.env}
+      PDM_WEBHOOK_URL: ${PDM_WEBHOOK_URL:-}
+    read_only: true
+  caddy:                                    # HTTPS reverse proxy with automatic certificates
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    volumes: ["./Caddyfile:/etc/caddy/Caddyfile:ro", "caddy_data:/data"]
+    depends_on: [pdm]
+volumes:
+  caddy_data:

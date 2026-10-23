@@ -1,0 +1,5 @@
+# Runtime dependencies of the scoring service (no web framework needed)
+numpy==2.3.2
+pandas==2.3.1
+scikit-learn==1.7.1   # must match the version used to train deploy/model/model.pkl
+PyYAML==6.0.2

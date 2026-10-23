@@ -1,0 +1,24 @@
+{
+  "temperature == raw x1": true,
+  "speed == raw x2": true,
+  "signal_strength == raw x3": true,
+  "energy == raw x4": true,
+  "motor_cycles == raw x5": true,
+  "vibration == raw vibration (ffill)": true,
+  "acceleration == diff(speed)": true,
+  "shuffled file is a row permutation": true,
+  "synthetic_clock": {
+    "start": "2023-01-02 06:00:00",
+    "end": "2023-01-06 08:04:00",
+    "span_hours": 98.06666666666666,
+    "step_s_min": 1.0,
+    "step_s_median": 2.0,
+    "step_s_max": 18.0,
+    "real_span_hours_at_4Hz": 7.777847222222222
+  },
+  "Fault_Combo2of3_TUNED_percentiles": {
+    "vibration_q": 0.8,
+    "revolutions_q": 0.65,
+    "abs_speed_q": 0.65
+  }
+}

@@ -1,0 +1,6 @@
+| model | split | auc | ap |
+|---|---|---|---|
+| rf | random rows (leaky) | 1.000 | 1.000 |
+| rf | leave-sessions-out | 0.963 | 0.927 |
+| lr | random rows (leaky) | 0.995 | 0.987 |
+| lr | leave-sessions-out | 0.989 | 0.979 |

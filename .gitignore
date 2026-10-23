@@ -1,30 +1,23 @@
-# --- Python ---
+# --- environments and caches ---
+.venv/
+.venv*/
+venv/
 __pycache__/
 *.py[cod]
-.venv/
-venv/
-env/
-*.pkl
-
-# --- LaTeX Build Artifacts (Junk files) ---
-*.aux
-*.fdb_latexmk
-*.fls
-*.log
-*.out
-*.synctex.gz
-*.bbl
-*.blg
-*.toc
-*.lof
-*.lot
-*.dvi
-
-# --- System ---
+.pytest_cache/
+.ipynb_checkpoints/
 .DS_Store
 .vscode/
 
-# --- Large Data ---
-# GitHub rejects files > 100MB.
-# Uncomment the line below if your CSVs are massive.
-# *.csv
+# --- secrets ---
+deploy/.env
+
+# --- generated, not part of the repository ---
+# dependency-free reference run (not used in the thesis)
+results_numpy/
+# recreated by scripts/08_synthetic_benchmark.py
+data/synthetic/*.csv.gz
+
+# --- documentation drafts kept locally (only README files are published) ---
+docs/
+legacy/LEGACY_MAP.md

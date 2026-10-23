@@ -1,167 +1,80 @@
-# Predictive AI Maintenance System for Elevators
+# Predictive AI Maintenance for Elevators: pipeline, data audit and deployable service
 
-[![Python](https://img.shields.io/badge/Python-3.9%2B-blue)](https://www.python.org/)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Master's_Thesis-orange)](https://github.com/Aladra8/Predictive_AI_Maintenance_System)
+MSc thesis code: **Baba Drammeh**, MSc Computer Engineering, Università degli Studi di Padova (with Università di Pisa).
 
-A reproducible, transparent Predictive Maintenance (PdM) pipeline for elevator systems using public telemetry data. This project establishes a baseline for detecting mechanical faults without ground-truth logs by using physically-grounded analytical labeling and rigorous robustness protocols ("Leakage Guard").
+One configuration file (`config/default.yaml`) drives every experiment. One command regenerates
+every table and figure (`results/`). The same pipeline runs on three datasets:
 
----
+| Experiment | Data | Scripts | Headline (scikit-learn, Random Forest) |
+|---|---|---|---|
+| **E1** | Original public Huawei dataset, real 4 Hz clock | 01–06 | x1–x5 are transforms of the 3 real channels (x4 = revolutions², R² = 1.0). The percentile-vote label = the first 23.3 min of the recording. Random split: AUC 1.000. Chronological test set: 0 positives. Vibration episodes: detectable (AUC 0.99), weakly predictable (AP 0.22 vs 0.05). |
+| **E2** | Researcher-processed table (renamed columns, synthetic clock, tuned labels, shuffled copy) | 07 | Every processing step verified. Random / shuffled split: AUC 1.000. Time-aware split with strict guard: 0.28–0.73. |
+| **E3** | Semi-synthetic benchmark: real baseline + simulated motor current + 12 injected faults | 08 | Unseen sessions: AUC 0.963, 10/12 faults warned 12.6 min before onset, 0.04 false events per healthy hour. Percentile labels vs truth: F1 ≤ 0.19. |
+| **Service** | E3 model behind an HTTP scoring API with event aggregation | 09, `deploy/` | Hold-out faulty session: event 11.6 min before onset. Hold-out healthy session: 0 alarms. |
 
-## 📖 Table of Contents
-- [Project Overview](#-project-overview)
-- [Dataset & Feature Engineering](#-dataset--feature-engineering)
-- [Methodology](#-methodology)
-  - [Analytical Labeling](#1-analytical-labeling-2-of-3-rule)
-  - [Leakage Guard Protocol](#2-leakage-guard-robustness)
-- [Project Structure](#-project-structure)
-- [Installation](#-installation)
-- [Usage Pipeline](#-usage-pipeline)
-- [Results](#-results)
-- [Thesis Report](#-thesis-report)
-- [Author](#-author)
+`results/SUMMARY.md` collects all headline tables.
 
----
+## Quick start (macOS / Linux, Python 3.11 or newer)
 
-## Project Overview
+```bash
+python3 --version                      # must be 3.11+ (macOS often ships 3.9: install 3.12 from python.org)
+python3 -m venv .venv
+source .venv/bin/activate              # Windows: .venv\Scripts\activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m pytest -q                    # 9 tests
+python scripts/run_all.py              # experiments 01–08, service model (09), figures (10); 30–60 min
+```
 
-**Motivation:** Public research in Elevator PdM is hindered by the lack of labeled datasets. Most studies rely on proprietary "black box" data.
-**Objective:** To create an auditable, open-source pipeline that:
-1.  Generates valid fault labels from raw telemetry.
-2.  Benchmarks interpretable models (Random Forest) against Neural Networks (MLP).
-3.  Validates that models learn physical failure precursors (Energy, Acceleration) rather than just memorizing rules.
-4.  Aggregates high-frequency alerts into actionable maintenance tickets to reduce alarm fatigue.
+Single steps: `python scripts/08_synthetic_benchmark.py`, etc. Options for every script:
+`--models rf lr`, `--config my.yaml`, `--engine numpy` (dependency-free smoke test, writes to `results_numpy/`).
 
----
+## Run the scoring service locally
 
-## Dataset & Feature Engineering
+```bash
+export PDM_API_KEY=dev-key                       # a password you choose
+python deploy/service/app.py                     # terminal 1: listens on http://localhost:8080
+# terminal 2 (activate .venv first):
+curl http://localhost:8080/health
+python deploy/replay_client.py --api-key dev-key --session 13 --speed 50   # unseen faulty session
+python deploy/replay_client.py --api-key dev-key --session 14 --speed 500  # unseen healthy session
+```
 
-**Source:** Huawei Munich Research Center (Zenodo/Kaggle).
-**Raw Data:** 112,001 rows of high-frequency telemetry (approx 4Hz).
+Endpoints: `GET /health`, `GET /model`, `POST /score`, `POST /flush`, `GET /events`, `GET /status`,
+`GET /metrics`. Requests other than `/health` need the header `X-API-Key`. Optional
+`PDM_WEBHOOK_URL` posts every closed event to a ticket system.
 
-### Feature Mapping
-The raw data contained anonymized features (`x1`...`x5`). Based on Exploratory Data Analysis (EDA) and physical correlations, we mapped them as follows:
+For 24/7 operation the repository includes `deploy/Dockerfile`, `deploy/docker-compose.yml` (with a
+Caddy HTTPS reverse proxy), `deploy/Caddyfile`, `deploy/.env.example` and a systemd unit
+(`deploy/systemd/`).
 
-| Original | Mapped Name | Description |
-| :--- | :--- | :--- |
-| `x1` | **Temperature** | Environmental context (slow drift). |
-| `x2` | **Speed** | Correlates with motion phases. |
-| `x3` | **Signal Strength** | IoT/Network health proxy. |
-| `x4` | **Energy** | Motor power consumption (peaks at start). |
-| `x5` | **Motor Cycles** | Cumulative usage counter. |
-| *Derived* | **Acceleration** | Discrete difference of Speed ($\Delta v$). |
-| *Derived* | **Timestamp** | Synthesized using Poisson process for time-series splits. |
+## Repository layout
 
----
+```
+config/default.yaml      every parameter (seeds, thresholds, splits, windows, models, benchmark, service)
+data/raw/                Kaggle mirror and original Zenodo CSV (MD5-checked); see data/raw/README.md
+data/processed/          the researcher-processed tables of Experiment 2 (+ shuffled copy)
+data/reported/           metrics files produced by the 2025 runs (as reported)
+pdm/                     library: data & clock, labels, features, splits, metrics, models, events, PCA, audit, synthetic benchmark, report
+scripts/                 numbered experiments 01–10 and run_all.py
+results/                 generated tables (.csv/.md/.tex), figures and run_meta.json per experiment, SUMMARY.md
+deploy/                  scoring service, replay client, trained model + model card, Docker/Caddy/systemd files
+tests/                   unit tests (labels, metrics, splits, events, train/serve parity)
+legacy/                  code of the earlier project phases, kept read-only for traceability
+```
 
-## Methodology
+## Data
 
-### 1. Analytical Labeling ("2-of-3 Rule")
-Since ground truth was unavailable, we developed a transparent labeling logic. A sample is flagged as **Faulty** if at least **2** of the following **3** sensors exceed their **95th percentile**:
-* Vibration
-* Speed
-* Revolutions
+* Original release: C. Axenie, S. Bortoli, *Predictive maintenance dataset*, Huawei Munich Research
+  Center, Zenodo, 2020, doi:10.5281/zenodo.3653909 (elevator car-door system, 4 Hz, 16:30–23:30).
+* Kaggle mirror: "Elevator Predictive Maintenance Dataset" (adds ID and x1–x5; origin undocumented).
 
-*Validation:* Principal Component Analysis (PCA) confirmed that these labeled points cluster in a distinct "High Operational Intensity" manifold, validating they are not random noise.
+## Reproducibility
 
-### 2. "Leakage Guard" (Robustness)
-To prove the model isn't just "cheating" by reversing the labeling rule, we introduced the **Guard Regime**.
-* **Standard Regime:** Train on all features.
-* **Guard Regime:** **Drop** the label-defining features (Vibration, Speed, Revolutions). The model must predict faults using only secondary context (Temperature, Energy, Acceleration).
+Seeds fixed (42 for models, 3 for the benchmark). The dataset MD5 is verified at load. Each results
+folder stores `run_meta.json` (config, git hash, engine, Python version). Metrics (ROC-AUC, AP, F1,
+bootstrap CIs, event recall, lead time) are implemented in NumPy (`pdm/metrics.py`).
 
-### 3. Event Aggregation
-Raw row-level predictions (4Hz) create too much noise. We implemented an event logic:
-* **Logic:** Merge consecutive faulty rows if the gap is < 60 seconds.
-* **Output:** Discrete "Maintenance Events" with Start Time, Duration, and Intensity.
+## Licence
 
----
-
-## Project Structure
-
-```text
-Predictive_AI_Maintenance_System/
-│
-├── Code/
-│   ├── src/
-│   │   ├── preprocess_large_dataset.py   # ETL, Feature Engineering, Labeling
-│   │   ├── phase1_noise_fs.py            # PCA, EDA, Threshold Grid
-│   │   ├── phase2_training.py            # Model Training (RF, MLP), Calibration
-│   │   ├── phase3_summarize.py           # Robustness Analysis & Tables
-│   │   └── visualization/                # Plotting scripts
-│   ├── data/
-│   │   ├── raw/                          # Place 'predictive-maintenance-dataset.csv' here
-│   │   └── processed/                    # Output CSVs appear here
-│   ├── outputs/                          # Saved models (.pkl) and artifacts
-│   └── requirements.txt                  # Python dependencies
-│
-├── Report/
-│   ├── Full_Research_Report.tex          # Main Thesis Source
-│   ├── references.bib                    # Bibliography
-│   ├── Images/                           # Figures for the report
-│   └── Tables/                           # CSV tables for LaTeX
-│
-└── README.md
-
-INSTALLATION
-
-1. Clone the repository:
-git clone [https://github.com/Aladra8/Predictive_AI_Maintenance_System.git](https://github.com/Aladra8/Predictive_AI_Maintenance_System.git)
-cd Predictive_AI_Maintenance_System
-
-2. Set up the environment (Optional but recommended):
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-3. Install dependencies:
-pip install -r Code/requirements.txt
-
-USAGE PIPELINE
-Run the scripts in the following order to reproduce the thesis results.
-Phase 1: Data Preparation
-python Code/src/preprocess_large_dataset.py
-
-Phase 2: EDA & Structural Validation
-Generates PCA plots, threshold visualizations, and distribution histograms to validate the labeling logic.
-python Code/others/run_phase1_noise_fs.py
-
-Phase 3: Training & Benchmarking
-Trains Random Forest and MLP models, generates ROC/PR curves, and runs the Leakage Guard robustness test.
-# Run Standard Training & Save Models
-python Code/others/run_phase2.py --save-models
-
-# Run Robustness Check (Leakage Guard)
-python Code/others/run_phase2_training.py --leakage-guard
-
-Phase 4: Visualization & Events
-Generates operational plots (Events per Day, Faults by Hour) and the Top-10 Events table.
-python Code/src/visualization/visualize_combined_faults.py
-# Note: Event analytics are also generated during Phase 1 & 2 outputs.
-
-
-RESULTS SUMMARY
-
-Model,ROC-AUC,F1-Score,Avg Precision,Interpretation
-Random Forest,0.999,0.985,0.998,Highly Interpretable (Recommended)
-MLP (Neural Net),0.999,0.982,0.997,Black-box Benchmark
-
-Key Findings:
-Interpretability: Random Forest matches Neural Network performance but offers superior transparency via Feature Importance and Partial Dependence Plots.
-
-Robustness: Even in the Guard Regime (Vibration removed), the model maintained high precision, proving it utilizes Energy and Acceleration as valid failure precursors.
-
-Operations: Event aggregation logic successfully reduced ~5,600 raw fault rows into 507 actionable maintenance tickets.
-
-THE REPORT
-The full academic report is available in the Report/ directory. It is written in LaTeX.
-
-To compile the PDF locally (VS Code):
-
-Ensure you have a TeX distribution installed (e.g., MacTeX for macOS).
-
-Open Report/Full_Research_Report.tex in VS Code.
-
-Run the build command (using LaTeX Workshop extension): Recipe: latexmk (latexmk -> bibtex -> latexmk)
-
-
-AUTHOR
-Buba Drammeh 
+GPL-3.0 (see `LICENSE`).

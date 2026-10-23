@@ -1,0 +1,12 @@
+| feature_set | feature | PC1 | PC2 |
+|---|---|---|---|
+| thesis PCA set (7) | acceleration | -0.007 | -0.017 |
+| thesis PCA set (7) | speed | 0.497 | 0.072 |
+| thesis PCA set (7) | vibration | -0.082 | 0.705 |
+| thesis PCA set (7) | revolutions | 0.495 | 0.097 |
+| thesis PCA set (7) | energy | 0.495 | 0.008 |
+| thesis PCA set (7) | signal_strength | 0.496 | 0.078 |
+| thesis PCA set (7) | humidity | -0.098 | 0.694 |
+| independent channels (3) | revolutions | -0.540 | 0.835 |
+| independent channels (3) | humidity | 0.589 | 0.466 |
+| independent channels (3) | vibration | 0.601 | 0.294 |

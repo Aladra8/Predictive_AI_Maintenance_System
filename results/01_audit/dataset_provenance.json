@@ -1,0 +1,31 @@
+{
+  "kaggle_md5": "f4b2fcb07499a7e8e17b19b29cca3eaa",
+  "rows": 112001,
+  "columns": [
+    "ID",
+    "revolutions",
+    "humidity",
+    "vibration",
+    "x1",
+    "x2",
+    "x3",
+    "x4",
+    "x5"
+  ],
+  "vibration_missing": 2438,
+  "recording_hours_at_4Hz": 7.777847222222222,
+  "zenodo_md5": "e6fc08f1f189dd822cdb20b93b61051b",
+  "zenodo_columns": [
+    "revolutions",
+    "humidity",
+    "vibration"
+  ],
+  "zenodo_corrupted_or_missing_cells": {
+    "revolutions": 535,
+    "humidity": 0,
+    "vibration": 5242
+  },
+  "kaggle_vs_zenodo_revolutions_max_abs_diff": 0.0,
+  "kaggle_vs_zenodo_humidity_max_abs_diff": 0.0,
+  "kaggle_vs_zenodo_vibration_max_abs_diff": 0.005000000000009663
+}

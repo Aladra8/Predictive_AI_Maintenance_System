@@ -1,0 +1,32 @@
+{
+  "2of3": {
+    "positives": 5600,
+    "share": 0.0499995535754145,
+    "first_row": 0,
+    "last_row": 5599,
+    "n_contiguous_runs": 1,
+    "longest_run_rows": 5600,
+    "positives_span_minutes": 23.333333333333332,
+    "thresholds": {
+      "vibration": 69.96,
+      "speed": 4.184,
+      "revolutions": 76.764
+    }
+  },
+  "2of4": {
+    "positives": 5600,
+    "share": 0.0499995535754145,
+    "first_row": 0,
+    "last_row": 5599,
+    "n_contiguous_runs": 1,
+    "longest_run_rows": 5600,
+    "positives_span_minutes": 23.333333333333332,
+    "thresholds": {
+      "vibration": 69.96,
+      "speed": 4.184,
+      "energy": 5892.711696,
+      "revolutions": 76.764
+    }
+  },
+  "rules_identical": true
+}

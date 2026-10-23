@@ -1,0 +1,71 @@
+{
+  "name": "elevator-door-pdm",
+  "version": "1.0.0+no-git",
+  "created": "2026-10-22T22:55:55",
+  "model": "rf",
+  "engine": "sklearn",
+  "target": "precursor_or_fault",
+  "inputs": {
+    "channels": [
+      "revolutions",
+      "humidity",
+      "vibration",
+      "motor_current"
+    ],
+    "sampling_hz": 4,
+    "features": 44,
+    "window_s": [
+      15,
+      60,
+      300
+    ]
+  },
+  "training_data": {
+    "source": "semi-synthetic benchmark (pdm/synthetic.py) built on the public Huawei door recording",
+    "sessions": 15,
+    "seed": 3,
+    "rows_1Hz": 108000,
+    "positive_share": 0.1836111111111111
+  },
+  "holdout_sessions": [
+    13,
+    14
+  ],
+  "holdout_metrics": {
+    "n": 14400.0,
+    "positives": 1543.0,
+    "accuracy": 0.9814583333333333,
+    "precision_fault": 1.0,
+    "recall_fault": 0.8269604666234608,
+    "f1_fault": 0.9052855622561191,
+    "f1_macro": 0.9475044107804979,
+    "roc_auc": 0.96020004384437,
+    "avg_precision": 0.912854799381104,
+    "tp": 1276.0,
+    "fp": 0.0,
+    "tn": 12857.0,
+    "fn": 267.0
+  },
+  "leave_sessions_out_metrics": {
+    "n": 108000.0,
+    "positives": 19830.0,
+    "accuracy": 0.9220925925925926,
+    "precision_fault": 0.9843856076035302,
+    "recall_fault": 0.5849722642460918,
+    "f1_fault": 0.7338520908458279,
+    "f1_macro": 0.8441097795458952,
+    "roc_auc": 0.9633987350000237,
+    "avg_precision": 0.927318824046178,
+    "tp": 11600.0,
+    "fp": 184.0,
+    "tn": 87986.0,
+    "fn": 8230.0
+  },
+  "intended_use": "Research demonstration of a predictive-maintenance scoring service. NOT validated on real faults.",
+  "limitations": [
+    "Trained on injected (simulated) faults; real fault signatures may differ.",
+    "motor_current is a simulated channel; real deployments need a real current sensor or a model without it.",
+    "Requires 4 Hz input with the listed channels; missing values are forward-filled.",
+    "Alarms must be reviewed by a qualified technician (human in the loop); lift safety components are high-risk under the EU AI Act."
+  ]
+}

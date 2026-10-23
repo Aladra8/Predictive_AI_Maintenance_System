@@ -1,0 +1,20 @@
+# Alternative to Docker: run the service with systemd on a Linux VM.
+# Install:  sudo cp deploy/systemd/pdm-service.service /etc/systemd/system/
+#           sudo systemctl daemon-reload && sudo systemctl enable --now pdm-service
+[Unit]
+Description=Elevator PdM scoring service
+After=network-online.target
+
+[Service]
+User=pdm
+WorkingDirectory=/opt/pdm/Predictive_AI_Maintenance_System
+EnvironmentFile=/opt/pdm/pdm.env
+Environment=PDM_HOST=127.0.0.1 PDM_PORT=8080
+ExecStart=/opt/pdm/venv/bin/python deploy/service/app.py
+Restart=on-failure
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
