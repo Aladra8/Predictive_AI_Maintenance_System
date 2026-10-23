@@ -18,6 +18,9 @@ results_numpy/
 # recreated by scripts/08_synthetic_benchmark.py
 data/synthetic/*.csv.gz
 
-# --- documentation drafts kept locally (only README files are published) ---
-docs/
+# --- documentation drafts kept locally (published: README files and docs/DEPLOYMENT.md) ---
+docs/*
 legacy/LEGACY_MAP.md
+
+# --- published documentation (must stay the last rule) ---
+!docs/DEPLOYMENT.md

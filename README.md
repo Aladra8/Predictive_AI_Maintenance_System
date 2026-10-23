@@ -44,6 +44,9 @@ Endpoints: `GET /health`, `GET /model`, `POST /score`, `POST /flush`, `GET /even
 `GET /metrics`. Requests other than `/health` need the header `X-API-Key`. Optional
 `PDM_WEBHOOK_URL` posts every closed event to a ticket system.
 
+The full deployment guide (local, Docker, Linux server with HTTPS, systemd, webhook, API and
+configuration reference) is in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+
 For 24/7 operation the repository includes `deploy/Dockerfile`, `deploy/docker-compose.yml` (with a
 Caddy HTTPS reverse proxy), `deploy/Caddyfile`, `deploy/.env.example` and a systemd unit
 (`deploy/systemd/`).
