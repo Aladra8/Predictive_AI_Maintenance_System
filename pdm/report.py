@@ -35,7 +35,7 @@ def write_summary(engine: str = "sklearn") -> str:
              "## 5. Events\n", _md(res / "05_events" / "thesis_label_events_by_gap.md"),
              _md(res / "05_events" / "vibration_exceedance_events_by_gap.md"),
              "## 6. PCA\n", _md(res / "06_pca" / "pca_summary.md"),
-             "# Experiment 2 – researcher-processed dataset\n",
+             "# Experiment 2 – reprocessed dataset (earlier phase)\n",
              "## Labels in the processed table\n", _md(mdl / "07_processed_dataset" / "label_structure.md"),
              "## Metrics reported in 2025\n", _md(mdl / "07_processed_dataset" / "reported_metrics_2025.md"),
              "## Re-evaluation (random, shuffled, blocked, blocked + strict guard)\n", _md(mdl / "07_processed_dataset" / "reevaluation.md"),

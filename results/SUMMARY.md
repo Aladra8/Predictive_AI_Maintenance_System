@@ -133,7 +133,7 @@
 | thesis PCA set (7) | 0.5749 | 0.1564 | 0.3972 |
 | independent channels (3) | 0.4111 | 0.3016 | 0.3052 |
 
-# Experiment 2 – researcher-processed dataset
+# Experiment 2 – reprocessed dataset (earlier phase)
 
 ## Labels in the processed table
 

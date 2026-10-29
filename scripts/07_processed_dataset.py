@@ -1,4 +1,4 @@
-"""07 – Experiment 2: the researcher-processed dataset (as used in the thesis runs).
+"""07 – Experiment 2: the reprocessed dataset from the earlier phase (as used in the thesis runs).
 
 The processed table (data/processed/processed_large_dataset_v4.csv) was built in
 phase 2 by: renaming x1..x5 to physical names, forward-filling vibration, adding

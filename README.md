@@ -8,7 +8,7 @@ every table and figure (`results/`). The same pipeline runs on three datasets:
 | Experiment | Data | Scripts | Headline (scikit-learn, Random Forest) |
 |---|---|---|---|
 | **E1** | Original public Huawei dataset, real 4 Hz clock | 01–06 | x1–x5 are transforms of the 3 real channels (x4 = revolutions², R² = 1.0). The percentile-vote label = the first 23.3 min of the recording. Random split: AUC 1.000. Chronological test set: 0 positives. Vibration episodes: detectable (AUC 0.99), weakly predictable (AP 0.22 vs 0.05). |
-| **E2** | Researcher-processed table (renamed columns, synthetic clock, tuned labels, shuffled copy) | 07 | Every processing step verified. Random / shuffled split: AUC 1.000. Time-aware split with strict guard: 0.28–0.73. |
+| **E2** | Reprocessed table from the earlier phase (renamed columns, synthetic clock, tuned labels, shuffled copy) | 07 | Every processing step verified. Random / shuffled split: AUC 1.000. Time-aware split with strict guard: 0.28–0.73. |
 | **E3** | Semi-synthetic benchmark: real baseline + simulated motor current + 12 injected faults | 08 | Unseen sessions: AUC 0.963, 10/12 faults warned 12.6 min before onset, 0.04 false events per healthy hour. Percentile labels vs truth: F1 ≤ 0.19. |
 | **Service** | E3 model behind an HTTP scoring API with event aggregation | 09, `deploy/` | Hold-out faulty session: event 11.6 min before onset. Hold-out healthy session: 0 alarms. |
 
@@ -56,7 +56,7 @@ Caddy HTTPS reverse proxy), `deploy/Caddyfile`, `deploy/.env.example` and a syst
 ```
 config/default.yaml      every parameter (seeds, thresholds, splits, windows, models, benchmark, service)
 data/raw/                Kaggle mirror and original Zenodo CSV (MD5-checked); see data/raw/README.md
-data/processed/          the researcher-processed tables of Experiment 2 (+ shuffled copy)
+data/processed/          the reprocessed tables of Experiment 2 (earlier phase) (+ shuffled copy)
 data/reported/           metrics files produced by the 2025 runs (as reported)
 pdm/                     library: data & clock, labels, features, splits, metrics, models, events, PCA, audit, synthetic benchmark, report
 scripts/                 numbered experiments 01–10 and run_all.py
